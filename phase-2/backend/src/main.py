@@ -18,7 +18,7 @@ origins = [
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://*.vercel.app",  
+    "https://hackathon-2-todo-app-git-main-miss-ranis-projects.vercel.app",  
 ]
 
 # Extra origins from env
