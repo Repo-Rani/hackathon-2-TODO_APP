@@ -115,3 +115,6 @@ def health_check():
         "status": "healthy",
         "database": "Neon PostgreSQL"
     }
+
+app = app  
+
