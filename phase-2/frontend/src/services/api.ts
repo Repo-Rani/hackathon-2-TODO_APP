@@ -46,8 +46,8 @@ export const taskAPI = {
   createTask: (userId: string, data: CreateTaskDTO) =>
     api.post<Task>(`/api/${userId}/tasks/`, data),
 
-  getTasks: (userId: string) =>
-    api.get<Task[]>(`/api/${userId}/tasks/`),
+  getTasks: (userId: string, params?: { completed?: boolean }) =>
+  api.get<Task[]>(`/api/${userId}/tasks/`, { params }),
 
   getTask: (userId: string, taskId: string) =>
     api.get<Task>(`/api/${userId}/tasks/${taskId}`),
