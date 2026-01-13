@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: Todo Authentication API
+  description: API for user authentication in the Full-Stack Todo Web Application
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.todo-app.com
+    description: Production server
+
+paths:
+  /api/auth/signup:
+    post:
+      summary: User Registration
+      description: Create a new user account with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: User successfully registered and authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegistrationResponse'
+        '400':
+          description: Bad request - Invalid input data (email format, password strength, etc.)
+        '409':
+          description: Conflict - Email already exists
+      security: []  # No authentication required for signup
+
+  /api/auth/signin:
+    post:
+      summary: User Login
+      description: Authenticate user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: User successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLoginResponse'
+        '400':
+          description: Bad request - Invalid input data
+        '401':
+          description: Unauthorized - Invalid email or password
+      security: []  # No authentication required for login
+
+  /api/auth/me:
+    get:
+      summary: Get Current User
+      description: Retrieve information about the currently authenticated user
+      responses:
+        '200':
+          description: Successfully retrieved current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized - Invalid or expired JWT token
+      security:
+        - bearerAuth: []
+
+  /api/auth/logout:
+    post:
+      summary: User Logout
+      description: Invalidate the current user's session
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Unauthorized - Invalid or expired JWT token
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegistration:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          description: User's password (minimum 8 characters)
+          example: "SecurePassword123"
+
+    UserRegistrationResponse:
+      type: object
+      required:
+        - user
+        - token
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: JWT token for subsequent API calls
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        password:
+          type: string
+          description: User's password
+          example: "SecurePassword123"
+
+    UserLoginResponse:
+      type: object
+      required:
+        - user
+        - token
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: JWT token for subsequent API calls
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: "user_abc123"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        name:
+          type: string
+          description: User's display name (optional)
+          example: "John Doe"
+        email_verified:
+          type: boolean
+          description: Whether the user's email has been verified
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the user account was created
+          example: "2025-01-11T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the user account was last updated
+          example: "2025-01-11T10:30:00Z"
+
+security:
+  - bearerAuth: []
