@@ -10,10 +10,26 @@ from src.api.auth_router import router as auth_router
 from src.api.task_router import router as task_router
 
 # IMPORTANT: models import so SQLModel tables detect ho
-import src.models  
+import src.models 
+
+# CORS settings
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "https://*.vercel.app",  
+]
+
+# Extra origins from env
+cors_origin = os.getenv("CORS_ORIGIN")
+if cors_origin:
+    origins.extend(cors_origin.split(","))
 
 # Load environment variables
 load_dotenv()
+
+
 
 # Database URL
 DATABASE_URL = os.getenv("DATABASE_URL")
