@@ -71,18 +71,7 @@ app = FastAPI(
 )
 
 
-# CORS settings
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-]
 
-# Extra origins from env
-cors_origin = os.getenv("CORS_ORIGIN")
-if cors_origin:
-    origins.extend(cors_origin.split(","))
 
 app.add_middleware(
     CORSMiddleware,
@@ -94,9 +83,9 @@ app.add_middleware(
 
 
 # Routers
-app.include_router(auth_router, prefix="/api", tags=["Authentication"])
+# Routers
+app.include_router(auth_router, prefix="/api", tags=["Authentication"])  
 app.include_router(task_router, prefix="/api", tags=["Tasks"])
-
 
 # Root
 @app.get("/", tags=["Root"])
@@ -116,5 +105,4 @@ def health_check():
         "database": "Neon PostgreSQL"
     }
 
-app = app  
 
