@@ -18,16 +18,16 @@ origins = [
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-
-    # ✅ CORRECT VERCEL FRONTEND
-    "https://hackathon-2-todo-app-three.vercel.app",
+    "https://hackathon-2-todo-app-git-main-miss-ranis-projects.vercel.app",  
 ]
-# Extra origins from env
-load_dotenv()
 
+# Extra origins from env
 cors_origin = os.getenv("CORS_ORIGIN")
 if cors_origin:
     origins.extend(cors_origin.split(","))
+
+# Load environment variables
+load_dotenv()
 
 
 
