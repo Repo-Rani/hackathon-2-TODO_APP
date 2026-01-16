@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional
-import jwt
+from jose import JWTError, jwt  # ✅ FIXED: Use python-jose instead of jwt
 from src.models.user import User, UserCreate, UserResponse
 import os
 from dotenv import load_dotenv
@@ -16,14 +16,24 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
 SECRET_KEY = os.getenv("BETTER_AUTH_SECRET")
+if not SECRET_KEY:
+    raise ValueError("❌ BETTER_AUTH_SECRET environment variable not set")
+SECRET_KEY = str(SECRET_KEY)  # ✅ FIXED: Ensure it's a string
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    # ✅ FIXED: Truncate password to 72 bytes for bcrypt compatibility
+    password_bytes = plain_password.encode('utf-8')[:72]
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.verify(truncated_password, hashed_password)
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # ✅ FIXED: Truncate password to 72 bytes for bcrypt compatibility
+    password_bytes = password.encode('utf-8')[:72]
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.hash(truncated_password)
 
 def authenticate_user(session: Session, email: str, password: str) -> Optional[User]:
     statement = select(User).where(User.email == email)
@@ -53,7 +63,7 @@ def get_current_user_from_token(token: str) -> dict:
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return payload
-    except jwt.JWTError:
+    except JWTError:  # ✅ FIXED: Use JWTError from jose
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
