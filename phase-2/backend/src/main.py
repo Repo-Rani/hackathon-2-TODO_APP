@@ -12,24 +12,25 @@ from src.api.task_router import router as task_router
 # IMPORTANT: models import so SQLModel tables detect ho
 import src.models 
 
-# CORS settings
+# Load environment variables
+load_dotenv()
+
+# CORS settings - ✅ Hugging Face ke liye updated
 origins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://hackathon-2-todo-app-git-main-miss-ranis-projects.vercel.app",  
+    "https://hackathon-2-todo-app-git-main-miss-ranis-projects.vercel.app",
+    # ✅ Agar tumhara Vercel production URL alag hai to wo bhi add karo:
+    "https://your-app-name.vercel.app",  # Replace with your actual URL
+    "*"  # ✅ Development ke liye sab allow (production mein specific URLs use karo)
 ]
 
 # Extra origins from env
 cors_origin = os.getenv("CORS_ORIGIN")
 if cors_origin:
     origins.extend(cors_origin.split(","))
-
-# Load environment variables
-load_dotenv()
-
-
 
 # Database URL
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -43,7 +44,6 @@ engine = create_engine(
     pool_pre_ping=True,   # dead connections avoid
     pool_recycle=300      # 5 min baad recycle
 )
-
 
 # ✅ Lifespan (startup + shutdown replacement)
 @asynccontextmanager
@@ -61,7 +61,6 @@ async def lifespan(app: FastAPI):
 
     print("👋 App shutting down...")
 
-
 # FastAPI app
 app = FastAPI(
     title="Todo API",
@@ -70,19 +69,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-
-
-
+# ✅ CORS Middleware - Updated
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins,  # Ya ["*"] for all origins (development only)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# Routers
 # Routers
 app.include_router(auth_router, prefix="/api", tags=["Authentication"])  
 app.include_router(task_router, prefix="/api", tags=["Tasks"])
@@ -96,7 +91,6 @@ def read_root():
         "docs": "/docs"
     }
 
-
 # Health check
 @app.get("/health", tags=["Health"])
 def health_check():
@@ -104,5 +98,3 @@ def health_check():
         "status": "healthy",
         "database": "Neon PostgreSQL"
     }
-
-
