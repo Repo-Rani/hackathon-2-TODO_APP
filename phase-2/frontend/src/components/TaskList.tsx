@@ -1,8 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { taskAPI } from '../services/api';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import TaskItem from './TaskItem';
+import { taskAPI } from '../services/api';
+import { CheckCircle2, Circle, Plus, Filter, List, CheckSquare, Square, RotateCcw } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -44,7 +52,9 @@ const TaskList = ({ userId }: TaskListProps) => {
       setTasks(response.data);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to load tasks');
+      const errorMessage = error.response?.data?.detail || 'Failed to load tasks';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -66,71 +76,128 @@ const TaskList = ({ userId }: TaskListProps) => {
     return true; // 'all'
   });
 
+  const activeCount = tasks.filter(task => !task.completed).length;
+  const completedCount = tasks.filter(task => task.completed).length;
+
   if (loading) {
-    return <div className="text-center py-8">Loading tasks...</div>;
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-center py-8 text-red-500">{error}</div>;
+    return (
+      <Card className="border-destructive">
+        <CardContent className="pt-6 text-center">
+          <p className="text-destructive font-medium">{error}</p>
+          <Button
+            variant="outline"
+            className="mt-4 flex items-center gap-2"
+            onClick={loadTasks}
+          >
+            <RotateCcw className="h-4 w-4" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div>
-      <div className="mb-4 flex space-x-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1 text-sm rounded-md ${
-            filter === 'all'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter('active')}
-          className={`px-3 py-1 text-sm rounded-md ${
-            filter === 'active'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Active
-        </button>
-        <button
-          onClick={() => setFilter('completed')}
-          className={`px-3 py-1 text-sm rounded-md ${
-            filter === 'completed'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Completed
-        </button>
-      </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Tasks</CardTitle>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <List className="h-3 w-3" />
+            {tasks.length}
+          </Badge>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <CheckSquare className="h-3 w-3" />
+            {completedCount}
+          </Badge>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Square className="h-3 w-3" />
+            {activeCount}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={filter} onValueChange={(value: any) => setFilter(value)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              All
+            </TabsTrigger>
+            <TabsTrigger value="active" className="flex items-center gap-2">
+              <Circle className="h-4 w-4" />
+              Active
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Completed
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      {filteredTasks.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          {filter === 'all'
-            ? 'No tasks yet. Add your first task!'
-            : filter === 'active'
-              ? 'No active tasks. Great job!'
-              : 'No completed tasks yet.'}
+        <div className="mt-4 space-y-3">
+          <AnimatePresence>
+            <LayoutGroup>
+              {filteredTasks.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="text-center py-8"
+                >
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    {filter === 'all' ? (
+                      <>
+                        <div className="p-3 bg-muted rounded-full">
+                          <Plus className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="font-medium text-lg">No tasks yet</h3>
+                        <p className="text-muted-foreground">Add your first task to get started!</p>
+                      </>
+                    ) : filter === 'active' ? (
+                      <>
+                        <div className="p-3 bg-muted rounded-full">
+                          <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="font-medium text-lg">No active tasks</h3>
+                        <p className="text-muted-foreground">Great job! All tasks are completed.</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-3 bg-muted rounded-full">
+                          <CheckCircle2 className="h-8 w-8 text-green-500" />
+                        </div>
+                        <h3 className="font-medium text-lg">No completed tasks</h3>
+                        <p className="text-muted-foreground">Start completing tasks to see them here.</p>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              ) : (
+                filteredTasks.map((task) => (
+                  <TaskItem
+                    key={task.id}
+                    task={task}
+                    userId={userId}
+                    onTaskUpdated={handleTaskUpdated}
+                    onTaskDeleted={handleTaskDeleted}
+                  />
+                ))
+              )}
+            </LayoutGroup>
+          </AnimatePresence>
         </div>
-      ) : (
-        <div>
-          {filteredTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              userId={userId}
-              onTaskUpdated={handleTaskUpdated}
-              onTaskDeleted={handleTaskDeleted}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

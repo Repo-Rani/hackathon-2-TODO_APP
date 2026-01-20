@@ -1,6 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Edit,
+  Trash2,
+  Check,
+  Save,
+  X,
+  Calendar,
+  Loader2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { taskAPI } from '../services/api';
 
 interface Task {
@@ -31,27 +48,39 @@ const TaskItem = ({ task, userId, onTaskUpdated, onTaskDeleted }: TaskItemProps)
     try {
       setLoading(true);
       await taskAPI.toggleTaskCompletion(userId, task.id);
+
+      // Show success notification
+      toast.success(task.completed ? 'Task marked as active!' : 'Task completed!');
+
       onTaskUpdated(); // Refresh the task list
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to update task');
+      const errorMessage = error.response?.data?.detail || 'Failed to update task';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this task?')) {
+    if (!confirm('Are you sure you want to delete this task?')) {
       return;
     }
 
     try {
       setLoading(true);
       await taskAPI.deleteTask(userId, task.id);
+
+      // Show success notification
+      toast.success('Task deleted successfully!');
+
       onTaskDeleted(); // Remove from the list
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to delete task');
+      const errorMessage = error.response?.data?.detail || 'Failed to delete task';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -65,104 +94,187 @@ const TaskItem = ({ task, userId, onTaskUpdated, onTaskDeleted }: TaskItemProps)
         description: editDescription || undefined,
       });
       setIsEditing(false);
+
+      // Show success notification
+      toast.success('Task updated successfully!');
+
       onTaskUpdated(); // Refresh the task list
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || 'Failed to update task');
+      const errorMessage = error.response?.data?.detail || 'Failed to update task';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <div className={`border rounded-lg p-4 mb-3 ${task.completed ? 'bg-green-50' : 'bg-white'} shadow-sm`}>
-      {isEditing ? (
-        <div className="space-y-3">
-          <input
-            type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            required
-          />
-          <textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            rows={2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-          <div className="flex space-x-2">
-            <button
-              onClick={handleSaveEdit}
-              disabled={loading || !editTitle.trim()}
-              className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              onClick={() => {
-                setIsEditing(false);
-                setEditTitle(task.title);
-                setEditDescription(task.description || '');
-              }}
-              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div>
-          <div className="flex items-start">
-            <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={handleToggleComplete}
-              disabled={loading}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mt-1"
-            />
-            <div className="ml-3 flex-1">
-              <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                {task.title}
-              </h3>
-              {task.description && (
-                <p className={`mt-1 text-sm ${task.completed ? 'text-gray-400' : 'text-gray-500'}`}>
-                  {task.description}
-                </p>
-              )}
-              <p className="mt-2 text-xs text-gray-400">
-                Created: {formatDate(task.created_at)} | Updated: {formatDate(task.updated_at)}
-              </p>
-            </div>
-          </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.95, height: 0 }}
+      transition={{ duration: 0.3 }}
+      className="overflow-hidden"
+    >
+      <Card className={`transition-all duration-200 hover:shadow-md ${task.completed ? 'bg-green-50/50 dark:bg-green-950/20' : ''}`}>
+        <CardContent className="p-4">
+          <AnimatePresence mode="wait">
+            {isEditing ? (
+              <motion.div
+                key="edit"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="text-lg font-medium"
+                  placeholder="Task title..."
+                  autoFocus
+                />
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Task description..."
+                  rows={3}
+                />
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveEdit}
+                    disabled={loading || !editTitle.trim()}
+                    className="flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditTitle(task.title);
+                      setEditDescription(task.description || '');
+                    }}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                <div className="flex items-start gap-3">
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleToggleComplete}
+                    disabled={loading}
+                    className="mt-0.5"
+                  >
+                    <Checkbox
+                      checked={task.completed}
+                      onCheckedChange={handleToggleComplete}
+                      disabled={loading}
+                    />
+                  </motion.button>
 
-          <div className="mt-3 flex space-x-2">
-            <button
-              onClick={() => setIsEditing(true)}
-              disabled={loading}
-              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={loading}
-              className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className={`text-base font-medium break-words ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        {task.title}
+                      </h3>
+                      {task.completed && (
+                        <Badge variant="secondary" className="text-xs">
+                          Completed
+                        </Badge>
+                      )}
+                    </div>
 
-      {error && (
-        <div className="mt-2 text-red-500 text-sm">{error}</div>
-      )}
-    </div>
+                    {task.description && (
+                      <p className={`mt-1 text-sm break-words ${task.completed ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                        {task.description}
+                      </p>
+                    )}
+
+                    <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(task.created_at)} at {formatTime(task.created_at)}</span>
+                      </div>
+                      {task.updated_at !== task.created_at && (
+                        <div className="flex items-center gap-1">
+                          <span>•</span>
+                          <span>Updated {formatDate(task.updated_at)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsEditing(true)}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-3 w-3" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDelete}
+                    disabled={loading}
+                    className="flex items-center gap-2 text-destructive border-destructive hover:text-destructive-foreground hover:bg-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Delete
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-2 text-sm font-medium text-destructive"
+            >
+              {error}
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 

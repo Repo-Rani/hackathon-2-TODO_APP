@@ -1,8 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { taskAPI } from '../services/api';
-import { $ZodUnknownInternals } from 'better-auth';
 
 interface TaskFormProps {
   userId: string;
@@ -30,64 +37,79 @@ const TaskForm = ({ userId, onTaskAdded }: TaskFormProps) => {
       setTitle('');
       setDescription('');
 
+      // Show success notification
+      toast.success('Task created successfully!');
+
       // Notify parent component
       onTaskAdded();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create task');
+      const errorMessage = err.response?.data?.detail || 'Failed to create task';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6">
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-            Task Title *
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={200}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Enter task title"
-          />
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card>
+        <CardHeader>
+          <CardTitle>Add New Task</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Task Title *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                maxLength={200}
+                placeholder="Enter task title"
+                className="w-full"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={1000}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Enter task description (optional)"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={1000}
+                rows={3}
+                placeholder="Enter task description (optional)"
+                className="w-full"
+              />
+            </div>
 
-        {error && (
-          <div className="text-red-500 text-sm">{error}</div>
-        )}
+            {error && (
+              <div className="text-sm font-medium text-destructive">{error}</div>
+            )}
 
-        <div>
-          <button
-            type="submit"
-            disabled={loading || !title.trim()}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            {loading ? 'Adding...' : 'Add Task'}
-          </button>
-        </div>
-      </div>
-    </form>
+            <Button type="submit" disabled={loading || !title.trim()} className="w-full">
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Task
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 

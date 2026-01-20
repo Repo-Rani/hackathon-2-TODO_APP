@@ -210,8 +210,9 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
 
 ## Recent Changes
+- 005-ui-ux-transformation: Added TypeScript 5.0+, JavaScript ES2022, CSS3 with Tailwind v3 + Next.js 16, React 18, Tailwind CSS, Shadcn/ui, Framer Motion, Lucide React, Recharts
 - 001-add-task: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 ## Active Technologies
 - Python 3.11 (Backend), TypeScript 5.0+ (Frontend) + FastAPI, Next.js 16, SQLModel, Better Auth, Tailwind CSS (004-phase2-specs-update)
-- Neon Serverless PostgreSQL (004-phase2-specs-update)
+- TypeScript 5.0+, JavaScript ES2022, CSS3 with Tailwind v3 + Next.js 16, React 18, Tailwind CSS, Shadcn/ui, Framer Motion, Lucide React, Recharts (005-ui-ux-transformation)
