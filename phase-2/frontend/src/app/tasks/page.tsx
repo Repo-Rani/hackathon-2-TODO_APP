@@ -3,23 +3,27 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { authAPI, taskAPI } from '../../services/api';
+import { authAPI } from '../../services/api';
 import TaskForm from '../../components/TaskForm';
 import TaskList from '../../components/TaskList';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTaskContext } from '../../contexts/TaskContext';
 import { CheckCircle2, Plus, Calendar, User } from 'lucide-react';
 
 export default function TasksPage() {
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [taskStats, setTaskStats] = useState({
-    total: 0,
-    completed: 0,
-    dueToday: 0
-  });
+
+  const {
+    userId,
+    setUserId,
+    tasks,
+    fetchTasks,
+    loading: tasksLoading,
+    error: tasksError
+  } = useTaskContext();
 
   const router = useRouter();
 
@@ -27,31 +31,23 @@ export default function TasksPage() {
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('access_token');
+        // Use the correct Better Auth token name
+        const token = localStorage.getItem('better-auth.session_token') ||
+                     localStorage.getItem('access_token') ||
+                     localStorage.getItem('token');
+
         if (!token) {
+          console.log('No token found, redirecting to signin');
           router.push('/signin');
           return;
         }
 
         const response = await authAPI.getCurrentUser();
+        console.log('User authenticated:', response.data);
         setUserId(response.data.id);
         setUserProfile(response.data);
-
-        // Load task statistics
-        const allTasks = await taskAPI.getTasks(response.data.id);
-        const completedTasks = allTasks.data.filter((task: any) => task.completed);
-        const today = new Date().toISOString().split('T')[0];
-        const dueToday = allTasks.data.filter((task: any) => {
-          // Assuming there's a due_date field - if not, just count all tasks as potential today tasks
-          return task.created_at.split('T')[0] === today;
-        });
-
-        setTaskStats({
-          total: allTasks.data.length,
-          completed: completedTasks.length,
-          dueToday: dueToday.length
-        });
       } catch (err) {
+        console.error('Authentication error:', err);
         // If not authenticated, redirect to sign in
         router.push('/signin');
       } finally {
@@ -60,7 +56,17 @@ export default function TasksPage() {
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, setUserId]);
+
+  // Calculate task stats from context tasks
+  const taskStats = {
+    total: tasks.length,
+    completed: tasks.filter((task: any) => task.completed).length,
+    dueToday: tasks.filter((task: any) => {
+      const today = new Date().toISOString().split('T')[0];
+      return task.created_at.split('T')[0] === today;
+    }).length
+  };
 
   if (loading) {
     return (
@@ -83,28 +89,8 @@ export default function TasksPage() {
   }
 
   const handleTaskAdded = () => {
-    // Task added, refresh or just continue
-    // Reload task stats
-    if (userProfile) {
-      setTimeout(async () => {
-        try {
-          const allTasks = await taskAPI.getTasks(userProfile.id);
-          const completedTasks = allTasks.data.filter((task: any) => task.completed);
-          const today = new Date().toISOString().split('T')[0];
-          const dueToday = allTasks.data.filter((task: any) => {
-            return task.created_at.split('T')[0] === today;
-          });
-
-          setTaskStats({
-            total: allTasks.data.length,
-            completed: completedTasks.length,
-            dueToday: dueToday.length
-          });
-        } catch (err) {
-          console.error('Failed to update task stats:', err);
-        }
-      }, 500); // Small delay to let the UI update
-    }
+    // The context will handle refreshing automatically
+    // No need for manual refresh here since context listens to global events
   };
 
   return (
@@ -171,7 +157,7 @@ export default function TasksPage() {
         transition={{ delay: 0.2 }}
         className="space-y-8"
       >
-        <TaskForm userId={userId} onTaskAdded={handleTaskAdded} />
+        <TaskForm onTaskAdded={handleTaskAdded} />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -182,7 +168,7 @@ export default function TasksPage() {
             <CheckCircle2 className="h-5 w-5 text-primary" />
             Your Tasks
           </h2>
-          <TaskList userId={userId} />
+          <TaskList />
         </motion.div>
       </motion.div>
     </motion.div>

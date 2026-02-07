@@ -5,6 +5,7 @@ import uuid
 
 if TYPE_CHECKING:
     from task import Task
+    from conversation import Conversation, Message
 
 class UserBase(SQLModel):
     email: str = Field(unique=True, nullable=False, max_length=255)
@@ -12,6 +13,7 @@ class UserBase(SQLModel):
 
 class User(UserBase, table=True):
     __tablename__ = "users"
+    __table_args__ = {"extend_existing": True}
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     password: str = Field(nullable=False)  # Add password field for database storage
@@ -21,6 +23,10 @@ class User(UserBase, table=True):
 
     # Relationship to tasks
     tasks: List["Task"] = Relationship(back_populates="user", cascade_delete=True)
+
+    # Relationships for chat functionality
+    conversations: List["Conversation"] = Relationship(back_populates="user", cascade_delete=True)
+    messages: List["Message"] = Relationship(back_populates="user", cascade_delete=True)
 
 class UserCreate(UserBase):
     password: str

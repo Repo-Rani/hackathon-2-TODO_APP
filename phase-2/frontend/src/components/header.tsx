@@ -42,7 +42,7 @@ const Header = () => {
         // For now using email from localStorage if available
         const email = localStorage.getItem('user_email') || '';
         const name = localStorage.getItem('user_name') || email.split('@')[0] || 'User';
-        
+
         setUserEmail(email);
         setUserName(name);
       }
@@ -52,10 +52,10 @@ const Header = () => {
 
     // Listen for storage changes (login/logout in other tabs)
     window.addEventListener('storage', checkAuth);
-    
+
     // ✅ NEW: Listen for custom authChange event
     window.addEventListener('authChange', checkAuth);
-    
+
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
@@ -117,7 +117,7 @@ const Header = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500">
               <CheckSquare className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-linear-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
               TaskFlow
             </span>
           </Link>
@@ -197,6 +197,12 @@ const Header = () => {
                       <DropdownMenuItem className="cursor-pointer">
                         <CheckSquare className="mr-2 h-4 w-4" />
                         <span>My Tasks</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/chat">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <ListTodo className="mr-2 h-4 w-4" />
+                        <span>AI Chat</span>
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuSeparator />
@@ -289,6 +295,12 @@ const Header = () => {
                           <Button variant="ghost" className="w-full justify-start">
                             <CheckSquare className="mr-2 h-4 w-4" />
                             My Tasks
+                          </Button>
+                        </Link>
+                        <Link href="/chat" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start">
+                            <ListTodo className="mr-2 h-4 w-4" />
+                            AI Chat
                           </Button>
                         </Link>
                         <Button

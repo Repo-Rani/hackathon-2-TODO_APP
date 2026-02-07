@@ -18,44 +18,38 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { taskAPI } from '../services/api';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-}
+import { useTaskContext } from '../contexts/TaskContext';
 
 interface TaskItemProps {
-  task: Task;
-  userId: string;
-  onTaskUpdated: () => void;
-  onTaskDeleted: () => void;
+  task: any;
+  onTaskUpdated: (taskId: string, updates: any) => void;
+  onTaskDeleted: (taskId: string) => void;
+  onToggleCompletion: (taskId: string) => void;
 }
 
-const TaskItem = ({ task, userId, onTaskUpdated, onTaskDeleted }: TaskItemProps) => {
+const TaskItem = ({ task, onTaskUpdated, onTaskDeleted, onToggleCompletion }: TaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const { updateTask, deleteTask, toggleTaskCompletion } = useTaskContext();
+
   const handleToggleComplete = async () => {
     try {
       setLoading(true);
-      await taskAPI.toggleTaskCompletion(userId, task.id);
+      const success = await toggleTaskCompletion(task.id);
 
-      // Show success notification
-      toast.success(task.completed ? 'Task marked as active!' : 'Task completed!');
-
-      onTaskUpdated(); // Refresh the task list
+      if (success) {
+        // Show success notification
+        toast.success(task.completed ? 'Task marked as active!' : 'Task completed!');
+        onToggleCompletion(task.id); // Notify parent
+      } else {
+        toast.error('Failed to update task');
+      }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      const errorMessage = error.response?.data?.detail || 'Failed to update task';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -70,17 +64,26 @@ const TaskItem = ({ task, userId, onTaskUpdated, onTaskDeleted }: TaskItemProps)
 
     try {
       setLoading(true);
-      await taskAPI.deleteTask(userId, task.id);
+      const success = await deleteTask(task.id);
 
-      // Show success notification
-      toast.success('Task deleted successfully!');
-
-      onTaskDeleted(); // Remove from the list
+      if (success) {
+        // Show success notification
+        toast.success('Task deleted successfully!');
+        onTaskDeleted(task.id); // Notify parent
+      } else {
+        toast.error('Failed to delete task');
+      }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      const errorMessage = error.response?.data?.detail || 'Failed to delete task';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      // Handle 404 error specifically when task doesn't exist
+      if (err instanceof Error && err.message.includes('404')) {
+        // Task was already deleted, just update the UI
+        toast.success('Task was already deleted!');
+        onTaskDeleted(task.id); // Notify parent to remove from UI
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to delete task';
+        setError(errorMessage);
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -89,19 +92,21 @@ const TaskItem = ({ task, userId, onTaskUpdated, onTaskDeleted }: TaskItemProps)
   const handleSaveEdit = async () => {
     try {
       setLoading(true);
-      await taskAPI.updateTask(userId, task.id, {
+      const success = await updateTask(task.id, {
         title: editTitle,
         description: editDescription || undefined,
       });
-      setIsEditing(false);
 
-      // Show success notification
-      toast.success('Task updated successfully!');
-
-      onTaskUpdated(); // Refresh the task list
+      if (success) {
+        setIsEditing(false);
+        // Show success notification
+        toast.success('Task updated successfully!');
+        onTaskUpdated(task.id, { title: editTitle, description: editDescription }); // Notify parent
+      } else {
+        toast.error('Failed to update task');
+      }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      const errorMessage = error.response?.data?.detail || 'Failed to update task';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update task';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

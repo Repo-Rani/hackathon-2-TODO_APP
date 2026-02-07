@@ -1,0 +1,255 @@
+# MCP Tools Specification for AI-Powered Todo Chatbot
+
+## Overview
+The following MCP (Model Context Protocol) tools are available for the AI agent to interact with the task management system. Each tool follows the official MCP SDK specification and enforces user data isolation.
+
+## Tool: add_task
+
+### Purpose
+Create a new task for the authenticated user
+
+### Function Signature
+```python
+@mcp.tool()
+async def add_task(
+    user_id: str,
+    title: str,
+    description: str = ""
+) -> dict:
+    """Create a new task for the user."""
+```
+
+### Parameters
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| user_id | string | Yes | Valid user ID | Authenticated user identifier |
+| title | string | Yes | 1-200 chars | Task title |
+| description | string | No | Max 1000 chars | Optional task details |
+
+### Return Value
+```json
+{
+  "task_id": 42,
+  "status": "created",
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread"
+}
+```
+
+### Error Cases
+- `user_id` not found → 404 error
+- `title` empty → 400 validation error
+- `title` > 200 chars → 400 validation error
+- Database error → 500 internal error
+
+### Database Operations
+```sql
+INSERT INTO tasks (user_id, title, description, completed, created_at, updated_at)
+VALUES (?, ?, ?, false, NOW(), NOW())
+RETURNING id, title, description;
+```
+
+## Tool: list_tasks
+
+### Purpose
+Retrieve all or filtered tasks for the authenticated user
+
+### Function Signature
+```python
+@mcp.tool()
+async def list_tasks(
+    user_id: str,
+    status: str = "all"
+) -> list[dict]:
+    """List user's tasks with optional status filter."""
+```
+
+### Parameters
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| user_id | string | Yes | Valid user ID | Authenticated user identifier |
+| status | string | No | "all", "pending", "completed" | Filter by completion status |
+
+### Return Value
+```json
+[
+  {
+    "id": 1,
+    "title": "Buy groceries",
+    "description": "",
+    "completed": false,
+    "created_at": "2025-01-20T10:30:00Z",
+    "updated_at": "2025-01-20T10:30:00Z"
+  },
+  {
+    "id": 2,
+    "title": "Call mom",
+    "description": "Wish happy birthday",
+    "completed": true,
+    "created_at": "2025-01-19T14:20:00Z",
+    "updated_at": "2025-01-20T09:15:00Z"
+  }
+]
+```
+
+### Status Filter Behavior
+- `"all"` → Return all tasks
+- `"pending"` → Return only incomplete tasks (completed = false)
+- `"completed"` → Return only complete tasks (completed = true)
+- Invalid status → Default to "all"
+
+### Error Cases
+- `user_id` not found → Return empty array
+- Database error → 500 internal error
+
+### Database Operations
+```sql
+-- All tasks
+SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC;
+
+-- Pending only
+SELECT * FROM tasks WHERE user_id = ? AND completed = false ORDER BY created_at DESC;
+
+-- Completed only
+SELECT * FROM tasks WHERE user_id = ? AND completed = true ORDER BY created_at DESC;
+```
+
+## Tool: complete_task
+
+### Purpose
+Mark a specific task as complete
+
+### Function Signature
+```python
+@mcp.tool()
+async def complete_task(
+    user_id: str,
+    task_id: int
+) -> dict:
+    """Mark a task as complete."""
+```
+
+### Parameters
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| user_id | string | Yes | Valid user ID | Authenticated user identifier |
+| task_id | integer | Yes | Positive integer | Task to mark complete |
+
+### Return Value
+```json
+{
+  "task_id": 3,
+  "status": "completed",
+  "title": "Call mom",
+  "completed": true
+}
+```
+
+### Error Cases
+- Task not found → 404 error with message
+- Task belongs to different user → 403 forbidden
+- Task already complete → Return current state (idempotent)
+- Database error → 500 internal error
+
+### Database Operations
+```sql
+UPDATE tasks
+SET completed = true, updated_at = NOW()
+WHERE id = ? AND user_id = ?
+RETURNING id, title, completed;
+```
+
+## Tool: delete_task
+
+### Purpose
+Remove a task permanently
+
+### Function Signature
+```python
+@mcp.tool()
+async def delete_task(
+    user_id: str,
+    task_id: int
+) -> dict:
+    """Delete a task permanently."""
+```
+
+### Parameters
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| user_id | string | Yes | Valid user ID | Authenticated user identifier |
+| task_id | integer | Yes | Positive integer | Task to delete |
+
+### Return Value
+```json
+{
+  "task_id": 7,
+  "status": "deleted",
+  "title": "Old meeting task"
+}
+```
+
+### Error Cases
+- Task not found → 404 error
+- Task belongs to different user → 403 forbidden
+- Database error → 500 internal error
+
+### Database Operations
+```sql
+DELETE FROM tasks
+WHERE id = ? AND user_id = ?
+RETURNING id, title;
+```
+
+## Tool: update_task
+
+### Purpose
+Modify task title or description
+
+### Function Signature
+```python
+@mcp.tool()
+async def update_task(
+    user_id: str,
+    task_id: int,
+    title: str | None = None,
+    description: str | None = None
+) -> dict:
+    """Update task title and/or description."""
+```
+
+### Parameters
+| Parameter | Type | Required | Constraints | Description |
+|-----------|------|----------|-------------|-------------|
+| user_id | string | Yes | Valid user ID | Authenticated user identifier |
+| task_id | integer | Yes | Positive integer | Task to update |
+| title | string | No | 1-200 chars | New task title |
+| description | string | No | Max 1000 chars | New task description |
+
+### Return Value
+```json
+{
+  "task_id": 4,
+  "status": "updated",
+  "title": "Buy groceries and fruits",
+  "description": "Also get oranges"
+}
+```
+
+### Error Cases
+- Task not found → 404 error
+- Task belongs to different user → 403 forbidden
+- Both title and description are None → 400 validation error
+- Title empty string → 400 validation error
+- Database error → 500 internal error
+
+### Database Operations
+```sql
+UPDATE tasks
+SET
+  title = COALESCE(?, title),
+  description = COALESCE(?, description),
+  updated_at = NOW()
+WHERE id = ? AND user_id = ?
+RETURNING id, title, description;
+```

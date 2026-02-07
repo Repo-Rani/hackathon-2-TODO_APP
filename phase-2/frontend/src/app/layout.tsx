@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { Toaster } from "sonner";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import ChatWidget from "@/components/chat-widget";
+import { TaskProvider } from "@/contexts/TaskContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,19 +34,22 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Header />
-          <main className="min-h-[calc(100vh-200px)]">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
-        </ThemeProvider>
+        <TaskProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Header />
+            <main className="min-h-[calc(100vh-200px)]">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
+            <ChatWidget />
+          </ThemeProvider>
+        </TaskProvider>
       </body>
     </html>
   );

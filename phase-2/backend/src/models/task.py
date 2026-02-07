@@ -2,7 +2,6 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from datetime import datetime
 from .user import User, UserResponse
-import uuid
 
 class TaskBase(SQLModel):
     title: str = Field(min_length=1, max_length=200)
@@ -11,8 +10,9 @@ class TaskBase(SQLModel):
 
 class Task(TaskBase, table=True):
     __tablename__ = "tasks"
+    __table_args__ = {"extend_existing": True}
 
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="users.id", nullable=False, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -29,7 +29,7 @@ class TaskUpdate(SQLModel):
     completed: Optional[bool] = None
 
 class TaskResponse(TaskBase):
-    id: str
+    id: int
     user_id: str
     created_at: datetime
     updated_at: datetime

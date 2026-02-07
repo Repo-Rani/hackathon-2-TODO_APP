@@ -16,6 +16,7 @@ from src.services.auth_service import (
 
 
 router = APIRouter(
+    prefix="/api",
     tags=["authentication"]
 )
 

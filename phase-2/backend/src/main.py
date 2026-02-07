@@ -8,6 +8,7 @@ import os
 # Routers
 from src.api.auth_router import router as auth_router
 from src.api.task_router import router as task_router
+from src.routes.chat import router as chat_router
 
 # IMPORTANT: models import so SQLModel tables detect ho
 import src.models 
@@ -42,19 +43,23 @@ engine = create_engine(
     DATABASE_URL,
     echo=True,            # SQL logs console mein
     pool_pre_ping=True,   # dead connections avoid
-    pool_recycle=300      # 5 min baad recycle
+    pool_recycle=300,     # 5 min baad recycle
+    connect_args={
+        "sslmode": "require",
+        "connect_timeout": 10,
+    }
 )
 
 # ✅ Lifespan (startup + shutdown replacement)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 App starting... creating database tables")
+    print("App starting... creating database tables")
 
     try:
         SQLModel.metadata.create_all(engine)
-        print("✅ Tables created successfully")
+        print("Tables created successfully")
     except Exception as e:
-        print("❌ Error while creating tables:", e)
+        print("Error while creating tables:", e)
         raise
 
     yield  # ---- app runs here ----
@@ -79,8 +84,9 @@ app.add_middleware(
 )
 
 # Routers
-app.include_router(auth_router, prefix="/api", tags=["Authentication"])  
+app.include_router(auth_router, tags=["Authentication"])  # auth_router already has /api prefix
 app.include_router(task_router, prefix="/api", tags=["Tasks"])
+app.include_router(chat_router, tags=["Chat"])
 
 # Root
 @app.get("/", tags=["Root"])

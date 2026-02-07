@@ -12,8 +12,17 @@ load_dotenv()
 # Get database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Create the engine
-engine = create_engine(DATABASE_URL, echo=False)
+# Create the engine with proper SSL settings for Neon
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,  # Enable SQL logging for debugging
+    pool_pre_ping=True,   # Verify connections before use
+    pool_recycle=300,     # Recycle connections every 5 minutes
+    connect_args={
+        "sslmode": "require",
+        "connect_timeout": 10,
+    }
+)
 
 def get_session() -> Generator[Session, None, None]:
     with Session(engine) as session:

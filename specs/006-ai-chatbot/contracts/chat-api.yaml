@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: AI-Powered Todo Chatbot API
+  description: API for conversational task management
+  version: 1.0.0
+servers:
+  - url: https://api.todo-chatbot.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Handle user chat message
+      description: Process a user message and return AI-generated response
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response from AI agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user access violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - conversation doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited - too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatRequest:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          description: ID of existing conversation (omit for new conversation)
+          example: 123
+        message:
+          type: string
+          description: User's message in natural language
+          example: "Add a task to buy groceries"
+          minLength: 1
+          maxLength: 5000
+      required:
+        - message
+
+    ChatResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          description: ID of the conversation (new or existing)
+          example: 123
+        response:
+          type: string
+          description: AI-generated response in natural language
+          example: "✓ Created task #456: Buy groceries"
+        tool_calls:
+          type: array
+          description: Optional debug information about tools called
+          items:
+            $ref: '#/components/schemas/ToolCall'
+          nullable: true
+
+    ToolCall:
+      type: object
+      properties:
+        tool:
+          type: string
+          description: Name of the MCP tool called
+          example: "add_task"
+        arguments:
+          type: object
+          description: Arguments passed to the tool
+          example:
+            user_id: "user123"
+            title: "Buy groceries"
+        result:
+          type: object
+          description: Result returned by the tool
+          example:
+            task_id: 456
+            status: "created"
+            title: "Buy groceries"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Unauthorized"
+        detail:
+          type: string
+          description: Detailed error message
+          example: "Invalid or expired JWT token"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 401
+
+security:
+  - bearerAuth: []

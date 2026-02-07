@@ -15,19 +15,22 @@ import {
   BarChart3,
   ListChecks
 } from 'lucide-react';
-import { authAPI, taskAPI } from '../../services/api';
+import { authAPI } from '../../services/api';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTaskContext } from '../../contexts/TaskContext';
 
 const HomePage = () => {
-  const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
+  const {
+    tasks,
+    userId,
+    setUserId,
+    loading: tasksLoading,
+    fetchTasks
+  } = useTaskContext();
+
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [taskStats, setTaskStats] = useState({
-    total: 0,
-    completed: 0,
-    pending: 0,
-    overdue: 0
-  });
-  const [recentTasks, setRecentTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,48 +41,38 @@ const HomePage = () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
-        // Redirect to sign in if not authenticated
-        window.location.href = '/signin';
+        // Redirect to sign in if not authenticated using Next.js router
+        router.push('/signin');
         return;
       }
 
       const response = await authAPI.getCurrentUser();
       setUserId(response.data.id);
       setUserProfile(response.data);
-
-      // Load task statistics
-      const allTasks = await taskAPI.getTasks(response.data.id);
-      const completedTasks = allTasks.data.filter((task: any) => task.completed);
-      const pendingTasks = allTasks.data.filter((task: any) => !task.completed);
-
-      // For simplicity, we'll consider overdue as tasks that are past due
-      // In a real app, you'd have due dates for tasks
-      const overdueTasks = pendingTasks.filter((task: any) => {
-        // Placeholder logic - in real app you'd check due dates
-        return false;
-      });
-
-      setTaskStats({
-        total: allTasks.data.length,
-        completed: completedTasks.length,
-        pending: pendingTasks.length,
-        overdue: overdueTasks.length
-      });
-
-      // Get recent tasks (last 5)
-      const sortedTasks = [...allTasks.data].sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ).slice(0, 5);
-
-      setRecentTasks(sortedTasks);
     } catch (err) {
       console.error('Failed to load user data:', err);
-      // Redirect to sign in if authentication fails
-      window.location.href = '/signin';
+      // Redirect to sign in if authentication fails using Next.js router
+      router.push('/signin');
     } finally {
       setLoading(false);
     }
   };
+
+  // Calculate task stats from context tasks
+  const taskStats = {
+    total: tasks.length,
+    completed: tasks.filter((task: any) => task.completed).length,
+    pending: tasks.filter((task: any) => !task.completed).length,
+    overdue: tasks.filter((task: any) => !task.completed).filter((task: any) => {
+      // Placeholder logic - in real app you'd check due dates
+      return false;
+    }).length
+  };
+
+  // Get recent tasks (last 5)
+  const recentTasks = [...tasks].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  ).slice(0, 5);
 
   if (loading) {
     return (

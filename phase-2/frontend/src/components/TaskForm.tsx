@@ -9,41 +9,46 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { taskAPI } from '../services/api';
+import { useTaskContext } from '../contexts/TaskContext';
 
 interface TaskFormProps {
-  userId: string;
   onTaskAdded: () => void;
 }
 
-const TaskForm = ({ userId, onTaskAdded }: TaskFormProps) => {
+const TaskForm = ({ onTaskAdded }: TaskFormProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { addTask } = useTaskContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setError('');
     setLoading(true);
 
     try {
-      await taskAPI.createTask(userId, {
+      const success = await addTask({
         title,
         description: description || undefined,
       });
 
-      // Reset form
-      setTitle('');
-      setDescription('');
+      if (success) {
+        // Reset form
+        setTitle('');
+        setDescription('');
 
-      // Show success notification
-      toast.success('Task created successfully!');
+        // Show success notification
+        toast.success('Task created successfully!');
 
-      // Notify parent component
-      onTaskAdded();
+        // Notify parent component
+        onTaskAdded();
+      } else {
+        toast.error('Failed to create task');
+      }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Failed to create task';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create task';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
