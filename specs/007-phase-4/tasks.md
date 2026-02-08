@@ -2531,45 +2531,6 @@ Nice to have, enhances submission:
 
 ---
 
-## Time Estimates by Day
-
-| Day | Tasks | Total Hours | Notes |
-|-----|-------|-------------|-------|
-| 1-2 | T-001 to T-008 | 12h | Setup & environment |
-| 3-4 | T-009 to T-014 | 14h | Containerization |
-| 5-6 | T-015 to T-024 | 16h | Kubernetes manifests |
-| 7-8 | T-025 to T-034 | 16h | Helm chart |
-| 9-10 | T-035 to T-039 | 10h | AI DevOps integration |
-| 11-12 | T-040 to T-045 | 14h | Testing & validation |
-| 13 | T-046 to T-050 | 12h | Documentation |
-| 14 | T-051 to T-052 | 4h | Demo & submission |
-
-**Total Estimated Time:** ~98 hours over 14 days (~7 hours/day)
-
----
-
-## Implementation Notes
-
-### Using Claude Code for Task Implementation
-
-For each task, use Claude Code with this pattern:
-```
-@specs/phase4/plan-phase4.md
-@specs/phase4/tasks-phase4.md
-
-Implement Task T-XXX: [Task Title]
-
-Please:
-1. Read the task description and acceptance criteria
-2. Reference the relevant Plan and Spec sections
-3. Implement the task following the spec-driven approach
-4. Verify all acceptance criteria are met
-5. Update any related documentation
-
-Task ID: T-XXX
-[Copy task description here]
-Task Completion Checklist
-For each task:
 
  Read Constitution, Spec, Plan, and Task description
  Understand acceptance criteria
