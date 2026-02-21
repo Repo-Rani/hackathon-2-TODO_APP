@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://todo-app.event-schemas/reminder-triggered/v1.0",
+  "title": "Reminder Triggered Event",
+  "description": "Event published when a reminder is triggered (scheduled time arrives)",
+  "type": "object",
+  "required": ["event_type", "event_id", "timestamp", "version", "data"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "const": "reminder-triggered",
+      "description": "Type of the event"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this event instance"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version (semver)"
+    },
+    "data": {
+      "type": "object",
+      "required": ["reminder_id", "task_id", "user_id", "reminder_time", "task_title"],
+      "properties": {
+        "reminder_id": {
+          "type": "integer",
+          "description": "Unique identifier of the reminder"
+        },
+        "task_id": {
+          "type": "integer",
+          "description": "Unique identifier of the task"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "User ID who owns this task"
+        },
+        "reminder_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the reminder was scheduled"
+        },
+        "task_title": {
+          "type": "string",
+          "description": "Title of the task"
+        },
+        "task_due_datetime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Due date and time of the task"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["High", "Medium", "Low"],
+          "description": "Priority level of the task"
+        }
+      }
+    }
+  }
+}

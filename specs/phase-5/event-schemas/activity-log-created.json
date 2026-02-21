@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://todo-app.event-schemas/activity-log-created/v1.0",
+  "title": "Activity Log Created Event",
+  "description": "Event published when an activity log entry is created",
+  "type": "object",
+  "required": ["event_type", "event_id", "timestamp", "version", "data"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "const": "activity-log-created",
+      "description": "Type of the event"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this event instance"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version (semver)"
+    },
+    "data": {
+      "type": "object",
+      "required": ["log_id", "user_id", "action"],
+      "properties": {
+        "log_id": {
+          "type": "integer",
+          "description": "Unique identifier of the activity log entry"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "User ID who performed the action"
+        },
+        "task_id": {
+          "type": "integer",
+          "description": "Unique identifier of the task (if applicable)"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action performed (e.g., task-created, task-updated, task-completed, task-deleted)"
+        },
+        "old_values": {
+          "type": "object",
+          "description": "Previous values before the action"
+        },
+        "new_values": {
+          "type": "object",
+          "description": "New values after the action"
+        }
+      }
+    }
+  }
+}

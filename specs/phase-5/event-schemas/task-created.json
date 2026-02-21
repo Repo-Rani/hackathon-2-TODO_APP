@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://todo-app.event-schemas/task-created/v1.0",
+  "title": "Task Created Event",
+  "description": "Event published when a new task is created",
+  "type": "object",
+  "required": ["event_type", "event_id", "timestamp", "version", "data"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "const": "task-created",
+      "description": "Type of the event"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this event instance"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version (semver)"
+    },
+    "data": {
+      "type": "object",
+      "required": ["task_id", "user_id", "title"],
+      "properties": {
+        "task_id": {
+          "type": "integer",
+          "description": "Unique identifier of the created task"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "User ID who owns this task"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Task title"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional task description"
+        },
+        "completed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Task completion status"
+        },
+        "due_datetime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional due date and time (ISO 8601)"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["High", "Medium", "Low"],
+          "default": "Medium",
+          "description": "Task priority level"
+        },
+        "recurrence_pattern": {
+          "type": "string",
+          "enum": ["daily", "weekly", "monthly", "none"],
+          "description": "Recurrence pattern for recurring tasks"
+        },
+        "recurrence_end_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional end date for recurrence"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of tag names associated with the task"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: todo-app-resiliency
+  namespace: todo
+spec:
+  policies:
+    retries:
+      # Retry policy for Kafka operations
+      kafka-retry:
+        policy: constant
+        duration: 1s
+        maxRetries: 3
+        maxInterval: 5s
+      # Retry policy for Dapr API calls
+      dapr-api-retry:
+        policy: constant
+        duration: 1s
+        maxRetries: 3
+      # Retry policy for database operations
+      db-retry:
+        policy: constant
+        duration: 2s
+        maxRetries: 3
+      # Retry policy for WebSocket connections
+      websocket-retry:
+        policy: exponential
+        initialInterval: 1s
+        maxInterval: 30s
+        maxRetries: 10
+
+    timeouts:
+      # Timeout for Kafka publish operations
+      kafka-timeout:
+        duration: 10s
+      # Timeout for Dapr API calls
+      dapr-timeout:
+        duration: 5s
+      # Timeout for database operations
+      db-timeout:
+        duration: 30s
+      # Timeout for HTTP requests
+      http-timeout:
+        duration: 30s
+
+    circuitBreakers:
+      # Circuit breaker for Kafka operations
+      kafka-cb:
+        interval: 30s
+        timeout: 5s
+        maxRetries: 3
+        trip: consecutiveFailures >= 5
+      # Circuit breaker for Dapr API calls
+      dapr-cb:
+        interval: 30s
+        timeout: 5s
+        maxRetries: 3
+        trip: consecutiveFailures >= 5
+
+  targets:
+    components:
+      # Apply retry and circuit breaker to Kafka Pub/Sub
+      kafka-pubsub:
+        outbound:
+          retry: kafka-retry
+          timeout: kafka-timeout
+          circuitBreaker: kafka-cb
+      # Apply retry to conversation state
+      conversation-state:
+        inbound:
+          retry: dapr-api-retry
+        outbound:
+          retry: dapr-api-retry
+          timeout: dapr-timeout
+
+    apps:
+      # Apply resiliency to all backend services
+      todo-backend:
+        retry: db-retry
+        timeout: db-timeout

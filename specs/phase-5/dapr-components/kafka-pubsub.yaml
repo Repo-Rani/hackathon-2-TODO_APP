@@ -1,0 +1,35 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-pubsub
+  namespace: todo
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka:9092"
+  - name: consumerGroup
+    value: "todo-app-consumer-group"
+  - name: authRequired
+    value: "true"
+  - name: saslUsername
+    secretKeyRef:
+      name: kafka-secrets
+      key: sasl-username
+  - name: saslPassword
+    secretKeyRef:
+      name: kafka-secrets
+      key: sasl-password
+  - name: authType
+    value: "sasl"
+  - name: saslMechanism
+    value: "PLAIN"
+  - name: initialOffset
+    value: "newest"
+  - name: consumeRetryInterval
+    value: "1s"
+  - name: deliverySemantic
+    value: "at_least_once"
+  - name: enableTLS
+    value: "false"  # Set to "true" for production

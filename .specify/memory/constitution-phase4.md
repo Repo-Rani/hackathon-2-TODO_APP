@@ -46,6 +46,7 @@ Follow-up TODOs:
 - **Docker AI Agent**: Gordon (Docker Desktop 4.53+)
 - **Kubernetes AI CLI**: `kubectl-ai`
 - **Kubernetes Agent**: Kagent
+
 - **Development AI**: Claude Code with Spec-Kit Plus
 
 ### 2.3 Application Components to Containerize

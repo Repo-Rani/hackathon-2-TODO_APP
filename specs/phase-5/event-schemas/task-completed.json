@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://todo-app.event-schemas/task-completed/v1.0",
+  "title": "Task Completed Event",
+  "description": "Event published when a task is marked as completed",
+  "type": "object",
+  "required": ["event_type", "event_id", "timestamp", "version", "data"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "const": "task-completed",
+      "description": "Type of the event"
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this event instance"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the event occurred"
+    },
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version (semver)"
+    },
+    "data": {
+      "type": "object",
+      "required": ["task_id", "user_id", "completed_at"],
+      "properties": {
+        "task_id": {
+          "type": "integer",
+          "description": "Unique identifier of the completed task"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "User ID who owns this task"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the task was completed"
+        }
+      }
+    }
+  }
+}

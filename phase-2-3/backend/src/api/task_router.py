@@ -70,7 +70,7 @@ async def get_tasks_endpoint(
 @router.get("/{task_id}", response_model=TaskResponse)
 async def get_task_endpoint(
     user_id: str,
-    task_id: str,
+    task_id: int,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session)
 ):
@@ -93,7 +93,7 @@ async def get_task_endpoint(
 @router.put("/{task_id}", response_model=TaskResponse)
 async def update_task_endpoint(
     user_id: str,
-    task_id: str,
+    task_id: int,
     task_update: TaskUpdate,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session)
@@ -117,7 +117,7 @@ async def update_task_endpoint(
 @router.delete("/{task_id}")
 async def delete_task_endpoint(
     user_id: str,
-    task_id: str,
+    task_id: int,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session)
 ):
@@ -141,7 +141,7 @@ async def delete_task_endpoint(
 @router.patch("/{task_id}/complete", response_model=TaskResponse)
 async def toggle_task_completion_endpoint(
     user_id: str,
-    task_id: str,
+    task_id: int,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session)
 ):
